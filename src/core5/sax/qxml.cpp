@@ -1,48 +1,17 @@
-/****************************************************************************
-**
-** Copyright (C) 2016 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtXml module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
-** included in the packaging of this file. Please review the following
-** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qglobal.h"
 
+// Disable warning about use of deprecated QXmlStreamLocator in QScopedPointer<>
+QT_WARNING_DISABLE_MSVC(4996)
+
 #include "qxml.h"
 #include "qxml_p.h"
+#if QT_CONFIG(textcodec)
+#include "qtextcodec.h"
+#endif
 #include "qbuffer.h"
-#include "qstringconverter.h"
 #if QT_CONFIG(regularexpression)
 #include "qregularexpression.h"
 #endif
@@ -205,7 +174,7 @@ static bool stripTextDecl(QString& str)
             "\\s*\\?>"
         ));
         QString strTmp = str.replace(textDecl, QLatin1String(""));
-        if (strTmp.length() != str.length())
+        if (strTmp.size() != str.size())
             return false; // external entity has wrong TextDecl
         str = strTmp;
 #else
@@ -243,7 +212,9 @@ public:
     int pos;
     int length;
     bool nextReturnedEndOfData;
-    QStringDecoder toUnicode;
+#if QT_CONFIG(textcodec)
+    QTextDecoder *encMapper;
+#endif
 
     QByteArray encodingDeclBytes;
     QString encodingDeclChars;
@@ -831,7 +802,7 @@ int QXmlAttributes::index(const QString& uri, const QString& localPart) const
 */
 int QXmlAttributes::length() const
 {
-    return attList.count();
+    return attList.size();
 }
 
 /*!
@@ -1056,6 +1027,9 @@ void QXmlInputSource::init()
         d->inputStream = nullptr;
 
         setData(QString());
+#if QT_CONFIG(textcodec)
+        d->encMapper = nullptr;
+#endif
         d->nextReturnedEndOfData = true; // first call to next() will call fetchData()
 
         d->encodingDeclBytes.clear();
@@ -1099,6 +1073,9 @@ QXmlInputSource::QXmlInputSource(QIODevice *dev)
 QXmlInputSource::~QXmlInputSource()
 {
     // ### close the input device.
+#if QT_CONFIG(textcodec)
+    delete d->encMapper;
+#endif
     delete d;
 }
 
@@ -1191,7 +1168,7 @@ void QXmlInputSource::setData(const QString& dat)
     d->str = dat;
     d->unicode = dat.unicode();
     d->pos = 0;
-    d->length = d->str.length();
+    d->length = d->str.size();
     d->nextReturnedEndOfData = false;
 }
 
@@ -1260,11 +1237,12 @@ void QXmlInputSource::fetchData()
     }
 }
 
+#if QT_CONFIG(textcodec)
 static QString extractEncodingDecl(const QString &text, bool *needMoreText)
 {
     *needMoreText = false;
 
-    int l = text.length();
+    int l = text.size();
     const QLatin1String snip("<?xml", std::min(l, 5));
     if (l > 0 && !text.startsWith(snip))
         return QString();
@@ -1301,6 +1279,7 @@ static QString extractEncodingDecl(const QString &text, bool *needMoreText)
 
     return encoding;
 }
+#endif // textcodec
 
 /*!
     This function reads the XML file from \a data and tries to
@@ -1315,49 +1294,83 @@ static QString extractEncodingDecl(const QString &text, bool *needMoreText)
 */
 QString QXmlInputSource::fromRawData(const QByteArray &data, bool beginning)
 {
+#if !QT_CONFIG(textcodec)
+    Q_UNUSED(beginning);
+    return QString::fromLatin1(data.constData(), data.size());
+#else
     if (data.size() == 0)
         return QString();
+    if (beginning) {
+        delete d->encMapper;
+        d->encMapper = nullptr;
+    }
 
-    if (beginning)
-        d->toUnicode = QStringDecoder();
+    int mib = 106; // UTF-8
 
     // This is the initial UTF codec we will read the encoding declaration with
-    if (!d->toUnicode.isValid()) {
+    if (d->encMapper == nullptr) {
         d->encodingDeclBytes.clear();
         d->encodingDeclChars.clear();
         d->lookingForEncodingDecl = true;
 
-        auto encoding = QStringConverter::encodingForData(data, char16_t('<'));
-        if (encoding) {
-            d->lookingForEncodingDecl = false;
-            d->toUnicode = QStringDecoder(*encoding);
-        } else {
-            d->toUnicode = QStringDecoder(QStringDecoder::Utf8);
+        // look for byte order mark and read the first 5 characters
+        if (data.size() >= 4) {
+            uchar ch1 = data.at(0);
+            uchar ch2 = data.at(1);
+            uchar ch3 = data.at(2);
+            uchar ch4 = data.at(3);
+
+            if ((ch1 == 0 && ch2 == 0 && ch3 == 0xfe && ch4 == 0xff) ||
+                (ch1 == 0xff && ch2 == 0xfe && ch3 == 0 && ch4 == 0))
+                mib = 1017; // UTF-32 with byte order mark
+            else if (ch1 == 0x3c && ch2 == 0x00 && ch3 == 0x00 && ch4 == 0x00)
+                mib = 1019; // UTF-32LE
+            else if (ch1 == 0x00 && ch2 == 0x00 && ch3 == 0x00 && ch4 == 0x3c)
+                mib = 1018; // UTF-32BE
         }
+        if (mib == 106 && data.size() >= 2) {
+            uchar ch1 = data.at(0);
+            uchar ch2 = data.at(1);
+
+            if ((ch1 == 0xfe && ch2 == 0xff) || (ch1 == 0xff && ch2 == 0xfe))
+                mib = 1015; // UTF-16 with byte order mark
+            else if (ch1 == 0x3c && ch2 == 0x00)
+                mib = 1014; // UTF-16LE
+            else if (ch1 == 0x00 && ch2 == 0x3c)
+                mib = 1013; // UTF-16BE
+        }
+
+        QTextCodec *codec = QTextCodec::codecForMib(mib);
+        Q_ASSERT(codec);
+
+        d->encMapper = codec->makeDecoder();
     }
 
-    QString input = d->toUnicode(data);
+    QString input = d->encMapper->toUnicode(data.constData(), data.size());
 
     if (d->lookingForEncodingDecl) {
         d->encodingDeclChars += input;
 
         bool needMoreText;
-        QByteArray encoding = extractEncodingDecl(d->encodingDeclChars, &needMoreText).toLatin1();
+        QString encoding = extractEncodingDecl(d->encodingDeclChars, &needMoreText);
 
         if (!encoding.isEmpty()) {
-            auto e = QStringDecoder::encodingForData(encoding);
-            if (e && *e != QStringDecoder::Utf8) {
-                d->toUnicode = QStringDecoder(*e);
+            if (QTextCodec *codec = QTextCodec::codecForName(std::move(encoding).toLatin1())) {
+                /* If the encoding is the same, we don't have to do toUnicode() all over again. */
+                if(codec->mibEnum() != mib) {
+                    delete d->encMapper;
+                    d->encMapper = codec->makeDecoder();
 
-                /* The variable input can potentially be large, so we deallocate
-                 * it before calling toUnicode() in order to avoid having two
-                 * large QStrings in memory simultaneously. */
-                input.clear();
+                    /* The variable input can potentially be large, so we deallocate
+                     * it before calling toUnicode() in order to avoid having two
+                     * large QStrings in memory simultaneously. */
+                    input.clear();
 
-                // prime the decoder with the data so far
-                d->toUnicode(d->encodingDeclBytes);
-                // now feed it the new data
-                input = d->toUnicode(data);
+                    // prime the decoder with the data so far
+                    d->encMapper->toUnicode(d->encodingDeclBytes.constData(), d->encodingDeclBytes.size());
+                    // now feed it the new data
+                    input = d->encMapper->toUnicode(data.constData(), data.size());
+                }
             }
         }
 
@@ -1366,6 +1379,7 @@ QString QXmlInputSource::fromRawData(const QByteArray &data, bool beginning)
     }
 
     return input;
+#endif
 }
 
 /*********************************************
@@ -1420,6 +1434,8 @@ QString QXmlInputSource::fromRawData(const QByteArray &data, bool beginning)
 
     Destroys the content handler.
 */
+QXmlContentHandler::~QXmlContentHandler()
+    = default;
 
 /*!
     \fn void QXmlContentHandler::setDocumentLocator(QXmlLocator* locator)
@@ -1641,6 +1657,8 @@ QString QXmlInputSource::fromRawData(const QByteArray &data, bool beginning)
 
     Destroys the error handler.
 */
+QXmlErrorHandler::~QXmlErrorHandler()
+    = default;
 
 /*!
     \fn bool QXmlErrorHandler::warning(const QXmlParseException& exception)
@@ -1716,6 +1734,8 @@ events are reported.
 
     Destroys the DTD handler.
 */
+QXmlDTDHandler::~QXmlDTDHandler()
+    = default;
 
 /*!
     \fn bool QXmlDTDHandler::notationDecl(const QString& name, const QString& publicId, const QString& systemId)
@@ -1778,6 +1798,8 @@ events are reported.
 
     Destroys the entity resolver.
 */
+QXmlEntityResolver::~QXmlEntityResolver()
+    = default;
 
 /*!
     \fn bool QXmlEntityResolver::resolveEntity(const QString& publicId, const QString& systemId, QXmlInputSource*& ret)
@@ -1842,6 +1864,8 @@ events are reported.
 
     Destroys the lexical handler.
 */
+QXmlLexicalHandler::~QXmlLexicalHandler()
+    = default;
 
 /*!
     \fn bool QXmlLexicalHandler::startDTD(const QString& name, const QString& publicId, const QString& systemId)
@@ -1986,6 +2010,8 @@ events are reported.
 
     Destroys the declaration handler.
 */
+QXmlDeclHandler::~QXmlDeclHandler()
+    = default;
 
 /*!
     \fn bool QXmlDeclHandler::attributeDecl(const QString& eName, const QString& aName, const QString& type, const QString& valueDefault, const QString& value)
@@ -2532,6 +2558,8 @@ void QXmlSimpleReaderPrivate::initIncrementalParsing()
 
     Destroys the reader.
 */
+QXmlReader::~QXmlReader()
+    = default;
 
 /*!
     \fn bool QXmlReader::feature(const QString& name, bool *ok) const
@@ -4179,7 +4207,7 @@ bool QXmlSimpleReaderPrivate::parseContent()
 
 bool QXmlSimpleReaderPrivate::reportEndEntities()
 {
-    int count = (int)xmlRefStack.count();
+    int count = (int)xmlRefStack.size();
     while (count != 0 && xmlRefStack.top().isEmpty()) {
         if (contentHnd) {
             if (reportWhitespaceCharData || !string().simplified().isEmpty()) {
@@ -7486,7 +7514,7 @@ bool QXmlSimpleReaderPrivate::processReference()
                     {
                         // Bypassed
                         stringAddC(QLatin1Char('&'));
-                        for (int i=0; i<(int)reference.length(); i++) {
+                        for (int i=0; i<(int)reference.size(); i++) {
                             stringAddC(reference[i]);
                         }
                         stringAddC(QLatin1Char(';'));
@@ -7508,7 +7536,7 @@ bool QXmlSimpleReaderPrivate::processReference()
                 if (parseReference_context == InEntityValue) {
                     // Bypassed
                     stringAddC(QLatin1Char('&'));
-                    for (int i=0; i<(int)reference.length(); i++) {
+                    for (int i=0; i<(int)reference.size(); i++) {
                         stringAddC(reference[i]);
                     }
                     stringAddC(QLatin1Char(';'));
@@ -7591,7 +7619,7 @@ bool QXmlSimpleReaderPrivate::processReference()
                         {
                             // Bypassed
                             stringAddC(QLatin1Char('&'));
-                            for (int i=0; i<(int)reference.length(); i++) {
+                            for (int i=0; i<(int)reference.size(); i++) {
                                 stringAddC(reference[i]);
                             }
                             stringAddC(QLatin1Char(';'));
@@ -7632,7 +7660,7 @@ bool QXmlSimpleReaderPrivate::parseString()
     signed char input;
 
     if (parseStack == nullptr || parseStack->isEmpty()) {
-        Done = parseString_s.length();
+        Done = parseString_s.size();
         state = 0;
     } else {
         state = parseStack->pop().state;
@@ -7698,8 +7726,8 @@ bool QXmlSimpleReaderPrivate::insertXmlRef(const QString &data, const QString &n
     } else {
         xmlRefStack.push(XmlRef(name, data));
     }
-    int n = qMax(parameterEntities.count(), entities.count());
-    if (xmlRefStack.count() > n+1) {
+    int n = qMax(parameterEntities.size(), entities.size());
+    if (xmlRefStack.size() > n+1) {
         // recursive entities
         reportParseError(QLatin1String(XMLERR_RECURSIVEENTITIES));
         return false;

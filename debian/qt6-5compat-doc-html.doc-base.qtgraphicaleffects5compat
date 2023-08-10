@@ -1,0 +1,9 @@
+Document: qt6-qtgraphicaleffects5compat-compat-manual
+Title: Qt 6, Qt 5 Graphical Effects compatibility
+Author: The Qt Company Ltd
+Abstract: This is the HTML documentation for Qt 6, Qt 5 Graphical Effects compatibility
+Section: Programming/C++
+
+Format: HTML
+Index: /usr/share/doc/qt6-5compat-doc-html/html/qtgraphicaleffects5compat/qtgraphicaleffects5-index.html
+Files: /usr/share/doc/qt6-5compat-doc-html/html/qtgraphicaleffects5compat/*.html

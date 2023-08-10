@@ -1,4 +1,4 @@
-# SymbolsHelper-Confirmed: 6.2.4 arm64
+# SymbolsHelper-Confirmed: 6.4.0 amd64
 libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
 * Build-Depends-Package: libqt6core5compat6-dev
  _Z21qt_regexp_toCanonicalRK7QStringN7QRegExp13PatternSyntaxE@Base 6.2.1
@@ -21,6 +21,9 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN10QTextCodecD0Ev@Base 6.2.1
  _ZN10QTextCodecD1Ev@Base 6.2.1
  _ZN10QTextCodecD2Ev@Base 6.2.1
+ _ZN10QXmlReaderD0Ev@Base 6.4.0
+ _ZN10QXmlReaderD1Ev@Base 6.4.0
+ _ZN10QXmlReaderD2Ev@Base 6.4.0
  _ZN11QBinaryJson11fromRawDataEPKciNS_14DataValidationE@Base 6.2.1
  _ZN11QBinaryJson12toBinaryDataERK13QJsonDocument@Base 6.2.1
  _ZN11QBinaryJson14fromBinaryDataERK10QByteArrayNS_14DataValidationE@Base 6.2.1
@@ -51,7 +54,13 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN14QXmlAttributesD0Ev@Base 6.2.1
  _ZN14QXmlAttributesD1Ev@Base 6.2.1
  _ZN14QXmlAttributesD2Ev@Base 6.2.1
+ _ZN14QXmlDTDHandlerD0Ev@Base 6.4.0
+ _ZN14QXmlDTDHandlerD1Ev@Base 6.4.0
+ _ZN14QXmlDTDHandlerD2Ev@Base 6.4.0
  _ZN15QLinkedListData11shared_nullE@Base 6.2.1
+ _ZN15QXmlDeclHandlerD0Ev@Base 6.4.0
+ _ZN15QXmlDeclHandlerD1Ev@Base 6.4.0
+ _ZN15QXmlDeclHandlerD2Ev@Base 6.4.0
  _ZN15QXmlInputSource11fromRawDataERK10QByteArrayb@Base 6.2.1
  _ZN15QXmlInputSource13EndOfDocumentE@Base 6.2.1
  _ZN15QXmlInputSource4initEv@Base 6.2.1
@@ -80,6 +89,9 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN16QBinaryJsonValueC2ERK17QBinaryJsonObject@Base 6.2.1
  _ZN16QBinaryJsonValueD1Ev@Base 6.2.1
  _ZN16QBinaryJsonValueD2Ev@Base 6.2.1
+ _ZN16QXmlErrorHandlerD0Ev@Base 6.4.0
+ _ZN16QXmlErrorHandlerD1Ev@Base 6.4.0
+ _ZN16QXmlErrorHandlerD2Ev@Base 6.4.0
  _ZN16QXmlSimpleReader10setFeatureERK7QStringb@Base 6.2.1
  _ZN16QXmlSimpleReader11setPropertyERK7QStringPv@Base 6.2.1
  _ZN16QXmlSimpleReader13parseContinueEv@Base 6.2.1
@@ -97,6 +109,9 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN16QXmlSimpleReaderD0Ev@Base 6.2.1
  _ZN16QXmlSimpleReaderD1Ev@Base 6.2.1
  _ZN16QXmlSimpleReaderD2Ev@Base 6.2.1
+ _ZN18QXmlContentHandlerD0Ev@Base 6.4.0
+ _ZN18QXmlContentHandlerD1Ev@Base 6.4.0
+ _ZN18QXmlContentHandlerD2Ev@Base 6.4.0
  _ZN18QXmlDefaultHandler10charactersERK7QString@Base 6.2.1
  _ZN18QXmlDefaultHandler10endElementERK7QStringS2_S2_@Base 6.2.1
  _ZN18QXmlDefaultHandler10fatalErrorERK18QXmlParseException@Base 6.2.1
@@ -129,6 +144,12 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN18QXmlDefaultHandlerD0Ev@Base 6.2.1
  _ZN18QXmlDefaultHandlerD1Ev@Base 6.2.1
  _ZN18QXmlDefaultHandlerD2Ev@Base 6.2.1
+ _ZN18QXmlEntityResolverD0Ev@Base 6.4.0
+ _ZN18QXmlEntityResolverD1Ev@Base 6.4.0
+ _ZN18QXmlEntityResolverD2Ev@Base 6.4.0
+ _ZN18QXmlLexicalHandlerD0Ev@Base 6.4.0
+ _ZN18QXmlLexicalHandlerD1Ev@Base 6.4.0
+ _ZN18QXmlLexicalHandlerD2Ev@Base 6.4.0
  _ZN18QXmlParseExceptionC1ERK7QStringiiS2_S2_@Base 6.2.1
  _ZN18QXmlParseExceptionC1ERKS_@Base 6.2.1
  _ZN18QXmlParseExceptionC2ERK7QStringiiS2_S2_@Base 6.2.1
@@ -162,7 +183,6 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZN7QRegExpD1Ev@Base 6.2.1
  _ZN7QRegExpD2Ev@Base 6.2.1
  _ZN7QRegExpaSERKS_@Base 6.2.1
- _ZN7QString5clearEv@Base 6.2.1
  _ZNK10QStringRef10startsWithE13QLatin1StringN2Qt15CaseSensitivityE@Base 6.2.1
  _ZNK10QStringRef10startsWithE5QCharN2Qt15CaseSensitivityE@Base 6.2.1
  _ZNK10QStringRef10startsWithERK7QStringN2Qt15CaseSensitivityE@Base 6.2.1
@@ -280,13 +300,7 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZNK7QRegExp9replaceInERK7QStringS2_@Base 6.2.1
  _ZNK7QRegExpcv8QVariantEv@Base 6.2.1
  _ZNK7QRegExpeqERKS_@Base 6.2.1
- (optional=templinst)_ZNKSt8_Rb_treeI7QStringSt4pairIKS0_S0_ESt10_Select1stIS3_ESt4lessIS0_ESaIS3_EE4findERS2_@Base 6.2.1
- (optional=templinst|arch=amd64 arm64 i386)_ZNSt8_Rb_treeI7QStringSt4pairIKS0_S0_ESt10_Select1stIS3_ESt4lessIS0_ESaIS3_EE16_M_insert_uniqueIS3_EES1_ISt17_Rb_tree_iteratorIS3_EbEOT_@Base 6.2.1
- (optional=templinst)_ZNSt8_Rb_treeI7QStringSt4pairIKS0_S0_ESt10_Select1stIS3_ESt4lessIS0_ESaIS3_EE24_M_get_insert_unique_posERS2_@Base 6.2.1
- (optional=templinst|arch=amd64 arm64)_ZNSt8_Rb_treeI7QStringSt4pairIKS0_S0_ESt10_Select1stIS3_ESt4lessIS0_ESaIS3_EE29_M_get_insert_hint_unique_posESt23_Rb_tree_const_iteratorIS3_ERS2_@Base 6.2.2
- (optional=templinst)_ZNSt8_Rb_treeI7QStringSt4pairIKS0_S0_ESt10_Select1stIS3_ESt4lessIS0_ESaIS3_EE4findERS2_@Base 6.2.1
- (optional=templinst)_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE24_M_get_insert_unique_posERS1_@Base 6.2.1
- (optional=templinst)_ZNSt8_Rb_treeIiSt4pairIKiiESt10_Select1stIS2_ESt4lessIiESaIS2_EE29_M_get_insert_hint_unique_posESt23_Rb_tree_const_iteratorIS2_ERS1_@Base 6.2.1
+ _ZSt19piecewise_construct@Base 6.4.0
  _ZTI10QTextCodec@Base 6.2.1
  _ZTI10QXmlReader@Base 6.2.1
  _ZTI11QXmlLocator@Base 6.2.1
@@ -314,11 +328,18 @@ libQt6Core5Compat.so.6 libqt6core5compat6 #MINVER#
  _ZTS18QXmlEntityResolver@Base 6.2.1
  _ZTS18QXmlLexicalHandler@Base 6.2.1
  _ZTV10QTextCodec@Base 6.2.1
+ _ZTV10QXmlReader@Base 6.4.0
  _ZTV11QXmlLocator@Base 6.2.1
  _ZTV14QXmlAttributes@Base 6.2.1
+ _ZTV14QXmlDTDHandler@Base 6.4.0
+ _ZTV15QXmlDeclHandler@Base 6.4.0
  _ZTV15QXmlInputSource@Base 6.2.1
+ _ZTV16QXmlErrorHandler@Base 6.4.0
  _ZTV16QXmlSimpleReader@Base 6.2.1
+ _ZTV18QXmlContentHandler@Base 6.4.0
  _ZTV18QXmlDefaultHandler@Base 6.2.1
+ _ZTV18QXmlEntityResolver@Base 6.4.0
+ _ZTV18QXmlLexicalHandler@Base 6.4.0
  _ZZNK10QStringRef7unicodeEvE6_empty@Base 6.2.1
  _Zeq13QLatin1StringRK10QStringRef@Base 6.2.1
  _ZeqRK10QStringRefS1_@Base 6.2.1

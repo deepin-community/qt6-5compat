@@ -1,41 +1,5 @@
-/****************************************************************************
-**
-** Copyright (C) 2016 The Qt Company Ltd.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtCore5Compat module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
-** included in the packaging of this file. Please review the following
-** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2016 The Qt Company Ltd.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qregexp.h"
 
@@ -52,6 +16,7 @@
 #include "qstringlist.h"
 #include "qstringmatcher.h"
 #include "private/qlocking_p.h"
+#include "qvarlengtharray.h"
 
 #include <limits.h>
 #include <algorithm>
@@ -693,134 +658,7 @@ QT_BEGIN_NAMESPACE
 
     \section1 Porting to QRegularExpression
 
-    The QRegularExpression class introduced in Qt 5 is a big improvement upon
-    QRegExp, in terms of APIs offered, supported pattern syntax and speed of
-    execution. The biggest difference is that QRegularExpression simply holds a
-    regular expression, and it's \e{not} modified when a match is requested.
-    Instead, a QRegularExpressionMatch object is returned, in order to check
-    the result of a match and extract the captured substring. The same applies
-    with global matching and QRegularExpressionMatchIterator.
-
-    Other differences are outlined below.
-
-    \section2 Different pattern syntax
-
-    Porting a regular expression from QRegExp to QRegularExpression may require
-    changes to the pattern itself.
-
-    In certain scenarios, QRegExp was too lenient and accepted patterns that
-    are simply invalid when using QRegularExpression. These are somehow easy
-    to detect, because the QRegularExpression objects built with these patterns
-    are not valid (cf. QRegularExpression::isValid()).
-
-    In other cases, a pattern ported from QRegExp to QRegularExpression may
-    silently change semantics. Therefore, it is necessary to review the
-    patterns used. The most notable cases of silent incompatibility are:
-
-    \list
-
-    \li Curly braces are needed in order to use a hexadecimal escape like
-    \c{\xHHHH} with more than 2 digits. A pattern like \c{\x2022} neeeds to
-    be ported to \c{\x{2022}}, or it will match a space (\c{0x20}) followed
-    by the string \c{"22"}. In general, it is highly recommended to always use
-    curly braces with the \c{\x} escape, no matter the amount of digits
-    specified.
-
-    \li A 0-to-n quantification like \c{{,n}} needs to be ported to \c{{0,n}} to
-    preserve semantics. Otherwise, a pattern such as \c{\d{,3}} would
-    actually match a digit followed by the exact string \c{"{,3}"}.
-
-    \li QRegExp by default does Unicode-aware matching, while
-    QRegularExpression requires a separate option; see below for more details.
-
-    \li c{.} in QRegExp does by default match all characters, including the
-    newline character. QRegularExpression excludes the newline character by
-    default. To include the newline character, set the
-    QRegularExpression::DotMatchesEverythingOption pattern option.
-
-    \endlist
-
-    \section2 Porting from QRegExp::exactMatch()
-
-    QRegExp::exactMatch() in Qt 4 served two purposes: it exactly matched
-    a regular expression against a subject string, and it implemented partial
-    matching.
-
-    \section3 Porting from QRegExp's Exact Matching
-
-    Exact matching indicates whether the regular expression matches the entire
-    subject string. For example, the classes yield on the subject string \c{"abc123"}:
-
-    \table
-    \header \li                  \li QRegExp::exactMatch() \li QRegularExpressionMatch::hasMatch()
-    \row    \li \c{"\\d+"}       \li \b false              \li \b true
-    \row    \li \c{"[a-z]+\\d+"} \li \b true               \li \b true
-    \endtable
-
-    Exact matching is not reflected in QRegularExpression. If you want
-    to be sure that the subject string matches the regular expression
-    exactly, you can wrap the pattern using the QRegularExpression::anchoredPattern()
-    function:
-
-    \snippet code/src_corelib_text_qregexp.cpp 21
-
-    \section3 Porting from QRegExp's Partial Matching
-
-    When using QRegExp::exactMatch(), if an exact match was not found, one
-    could still find out how much of the subject string was matched by the
-    regular expression by calling QRegExp::matchedLength(). If the returned length
-    was equal to the subject string's length, then one could conclude that a partial
-    match was found.
-
-    QRegularExpression supports partial matching explicitly by means of the
-    appropriate MatchType.
-
-    \section2 Global matching
-
-    Due to limitations of the QRegExp API it was impossible to implement global
-    matching correctly (that is, like Perl does). In particular, patterns that
-    can match 0 characters (like \c{"a*"}) are problematic.
-
-    QRegularExpression::globalMatch() implements Perl global match correctly, and
-    the returned iterator can be used to examine each result.
-
-    \section2 Unicode properties support
-
-    When using QRegExp, character classes such as \c{\w}, \c{\d}, etc. match
-    characters with the corresponding Unicode property: for instance, \c{\d}
-    matches any character with the Unicode Nd (decimal digit) property.
-
-    Those character classes only match ASCII characters by default when using
-    QRegularExpression: for instance, \c{\d} matches exactly a character in the
-    \c{0-9} ASCII range. It is possible to change this behavior by using the
-    UseUnicodePropertiesOption pattern option.
-
-    \section2 Wildcard matching
-
-    There is no direct way to do wildcard matching in QRegularExpression.
-    However, the wildcardToRegularExpression method is provided to translate
-    glob patterns into a Perl-compatible regular expression that can be used
-    for that purpose.
-
-    \section2 Other pattern syntaxes
-
-    QRegularExpression supports only Perl-compatible regular expressions.
-
-    \section2 Minimal matching
-
-    QRegExp::setMinimal() implemented minimal matching by simply reversing the
-    greediness of the quantifiers (QRegExp did not support lazy quantifiers,
-    like \c{*?}, \c{+?}, etc.). QRegularExpression instead does support greedy,
-    lazy and possessive quantifiers. The InvertedGreedinessOption
-    pattern option can be useful to emulate the effects of QRegExp::setMinimal():
-    if enabled, it inverts the greediness of quantifiers (greedy ones become
-    lazy and vice versa).
-
-    \section2 Caret modes
-
-    The AnchorAtOffsetMatchOption match option can be used to emulate the
-    QRegExp::CaretAtOffset behavior. There is no equivalent for the other
-    QRegExp::CaretMode modes.
+    \include corelib/port-from-qregexp.qdocinc porting-to-qregularexpression
 */
 
 #if defined(Q_OS_VXWORKS) && defined(EOS)
@@ -892,7 +730,7 @@ static void mergeInto(QList<int> *a, const QList<int> &b)
 */
 static QString wc2rx(const QString &wc_str, const bool enableEscaping)
 {
-    const int wclen = wc_str.length();
+    const int wclen = wc_str.size();
     QString rx;
     int i = 0;
     bool isEscaping = false; // the previous character is '\'
@@ -1478,7 +1316,7 @@ QRegExpEngine::QRegExpEngine(const QRegExpEngineKey &key)
 
     QString rx = qt_regexp_toCanonical(key.pattern, key.patternSyntax);
 
-    valid = (parse(rx.unicode(), rx.length()) == rx.length());
+    valid = (parse(rx.unicode(), rx.size()) == rx.size());
     if (!valid) {
 #ifndef QT_NO_REGEXP_OPTIM
         trivial = false;
@@ -1550,8 +1388,8 @@ void QRegExpMatchState::match(const QChar *str0, int len0, int pos0,
 #ifndef QT_NO_REGEXP_OPTIM
     if (eng->trivial && !oneTest) {
         // ### Qt6: qsizetype
-        pos = int(QtPrivate::findString(QStringView(str0, len0), pos0, QStringView(eng->goodStr.unicode(), eng->goodStr.length()), eng->cs));
-        matchLen = eng->goodStr.length();
+        pos = int(QtPrivate::findString(QStringView(str0, len0), pos0, QStringView(eng->goodStr.unicode(), eng->goodStr.size()), eng->cs));
+        matchLen = eng->goodStr.size();
         matched = (pos != -1);
     } else
 #endif
@@ -1756,7 +1594,7 @@ void QRegExpEngine::heuristicallyChooseHeuristic()
           proportion of the minimum-length string, and appear at a
           more-or-less known index.
         */
-        int goodStringScore = (64 * goodStr.length() / minl) -
+        int goodStringScore = (64 * goodStr.size() / minl) -
                               (goodLateStart - goodEarlyStart);
         /*
           Less magic formula: We pick some characters at random, and
@@ -2003,7 +1841,7 @@ bool QRegExpMatchState::testAnchor(int i, int a, const int *capBegin)
 bool QRegExpEngine::goodStringMatch(QRegExpMatchState &matchState) const
 {
     int k = matchState.pos + goodEarlyStart;
-    QStringMatcher matcher(goodStr.unicode(), goodStr.length(), cs);
+    QStringMatcher matcher(goodStr.unicode(), goodStr.size(), cs);
     while ((k = matcher.indexIn(matchState.in, matchState.len, k)) != -1) {
         int from = k - goodLateStart;
         int to = k - goodEarlyStart;
@@ -2387,7 +2225,7 @@ bool QRegExpMatchState::matchHere()
           It's time to wake up the sleepers.
         */
         j = 0;
-        while (j < sleeping.count()) {
+        while (j < sleeping.size()) {
             if (sleeping.at(j)[0] == i) {
                 const QList<int> &zzZ = sleeping.at(j);
                 int next = zzZ[1];
@@ -2681,22 +2519,22 @@ void QRegExpEngine::Box::cat(const Box &b)
 
 #ifndef QT_NO_REGEXP_OPTIM
     if (maxl != InftyLen) {
-        if (rightStr.length() + b.leftStr.length() >
-             qMax(str.length(), b.str.length())) {
-            earlyStart = minl - rightStr.length();
-            lateStart = maxl - rightStr.length();
+        if (rightStr.size() + b.leftStr.size() >
+             qMax(str.size(), b.str.size())) {
+            earlyStart = minl - rightStr.size();
+            lateStart = maxl - rightStr.size();
             str = rightStr + b.leftStr;
-        } else if (b.str.length() > str.length()) {
+        } else if (b.str.size() > str.size()) {
             earlyStart = minl + b.earlyStart;
             lateStart = maxl + b.lateStart;
             str = b.str;
         }
     }
 
-    if (leftStr.length() == maxl)
+    if (leftStr.size() == maxl)
         leftStr += b.leftStr;
 
-    if (b.rightStr.length() == b.maxl) {
+    if (b.rightStr.size() == b.maxl) {
         rightStr += b.rightStr;
     } else {
         rightStr = b.rightStr;
@@ -3241,7 +3079,7 @@ int QRegExpEngine::getEscape()
             }
             yyCh = getChar(); // skip closing '}'
 
-            int catlen = category.length();
+            int catlen = category.size();
             if (catlen == 1 || catlen == 2) {
                 switch (category.at(0)) {
                 case 'M':
@@ -3711,7 +3549,7 @@ int QRegExpEngine::parse(const QChar *pattern, int len)
 #endif
 
     // cleanup anchors
-    int numStates = s.count();
+    int numStates = s.size();
     for (int i = 0; i < numStates; ++i) {
         QRegExpAutomatonState &state = s[i];
         if (!state.anchors.isEmpty()) {
@@ -3951,7 +3789,7 @@ static void derefEngine(QRegExpEngine *eng, const QRegExpEngineKey &key)
     const auto locker = qt_scoped_lock(engineCacheMutex);
     if (!eng->ref.deref()) {
         if (QRECache *c = engineCache()) {
-            c->unusedEngines.insert(key, eng, 4 + key.pattern.length() / 4);
+            c->unusedEngines.insert(key, eng, 4 + key.pattern.size() / 4);
             c->usedEngines.remove(key);
         } else {
             delete eng;
@@ -4373,8 +4211,8 @@ void QRegExp::setMinimal(bool minimal)
 bool QRegExp::exactMatch(const QString &str) const
 {
     prepareEngineForMatch(priv, str);
-    priv->matchState.match(str.unicode(), str.length(), 0, priv->minimal, true, 0);
-    if (priv->matchState.captured[1] == str.length()) {
+    priv->matchState.match(str.unicode(), str.size(), 0, priv->minimal, true, 0);
+    if (priv->matchState.captured[1] == str.size()) {
         return true;
     } else {
         priv->matchState.captured[0] = 0;
@@ -4428,8 +4266,8 @@ int QRegExp::indexIn(const QString &str, int offset, CaretMode caretMode) const
 {
     prepareEngineForMatch(priv, str);
     if (offset < 0)
-        offset += str.length();
-    priv->matchState.match(str.unicode(), str.length(), offset,
+        offset += str.size();
+    priv->matchState.match(str.unicode(), str.size(), offset,
         priv->minimal, false, caretIndex(offset, caretMode));
     return priv->matchState.captured[0];
 }
@@ -4459,14 +4297,14 @@ int QRegExp::lastIndexIn(const QString &str, int offset, CaretMode caretMode) co
 {
     prepareEngineForMatch(priv, str);
     if (offset < 0)
-        offset += str.length();
-    if (offset < 0 || offset > str.length()) {
+        offset += str.size();
+    if (offset < 0 || offset > str.size()) {
         memset(priv->matchState.captured, -1, priv->matchState.capturedSize*sizeof(int));
         return -1;
     }
 
     while (offset >= 0) {
-        priv->matchState.match(str.unicode(), str.length(), offset,
+        priv->matchState.match(str.unicode(), str.size(), offset,
             priv->minimal, true, caretIndex(offset, caretMode));
         if (priv->matchState.captured[0] == offset)
             return offset;
@@ -4515,7 +4353,7 @@ QString QRegExp::replaceIn(const QString &str, const QString &after) const
 
     int index = 0;
     int numCaptures = rx2.captureCount();
-    int al = after.length();
+    int al = after.size();
     QRegExp::CaretMode caretMode = QRegExp::CaretAtZero;
 
     if (numCaptures > 0) {
@@ -4559,7 +4397,7 @@ QString QRegExp::replaceIn(const QString &str, const QString &after) const
                 }
             }
 
-            while (index <= s.length()) {
+            while (index <= s.size()) {
                 index = rx2.indexIn(s, index, caretMode);
                 if (index == -1)
                     break;
@@ -4571,7 +4409,7 @@ QString QRegExp::replaceIn(const QString &str, const QString &after) const
                 }
 
                 s.replace(index, rx2.matchedLength(), after2);
-                index += after2.length();
+                index += after2.size();
 
                 // avoid infinite loop on 0-length matches (e.g., QRegExp("[a-z]*"))
                 if (rx2.matchedLength() == 0)
@@ -4669,7 +4507,7 @@ int QRegExp::countIn(const QString &str) const
     QRegExp rx2(*this);
     int count = 0;
     int index = -1;
-    int len = str.length();
+    int len = str.size();
     while (index < len - 1) {                 // count overlapping matches
         index = rx2.indexIn(str, index + 1);
         if (index == -1)
@@ -4955,7 +4793,7 @@ QString QRegExp::errorString()
 QString QRegExp::escape(const QString &str)
 {
     QString quoted;
-    const int count = str.count();
+    const int count = str.size();
     quoted.reserve(count * 2);
     const QLatin1Char backslash('\\');
     for (int i = 0; i < count; i++) {
