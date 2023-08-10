@@ -1,42 +1,6 @@
-/****************************************************************************
-**
-** Copyright (C) 2016 The Qt Company Ltd.
-** Copyright (C) 2016 Intel Corporation.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtCore module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
-** included in the packaging of this file. Please review the following
-** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2016 The Qt Company Ltd.
+// Copyright (C) 2016 Intel Corporation.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #ifndef QBINARYJSON_P_H
 #define QBINARYJSON_P_H
@@ -131,11 +95,16 @@ using qle_ushort = q_littleendian<unsigned short>;
 using qle_int = q_littleendian<int>;
 using qle_uint = q_littleendian<unsigned int>;
 
-template<int pos, int width>
-using qle_bitfield = QLEIntegerBitfield<uint, pos, width>;
+template<typename... Accessors>
+using qle_bitfield = QLEIntegerBitfieldUnion<uint, Accessors...>;
 
 template<int pos, int width>
-using qle_signedbitfield = QLEIntegerBitfield<int, pos, width>;
+using qle_bitfield_accessor
+        = QSpecialIntegerAccessor<QLittleEndianStorageType<uint>, pos, width>;
+
+template<int pos, int width>
+using qle_signedbitfield_accessor
+        = QSpecialIntegerAccessor<QLittleEndianStorageType<uint>, pos, width, int>;
 
 using offset = qle_uint;
 
@@ -146,7 +115,7 @@ const int MaxLatin1Length = 0x7fff;
 
 static inline bool useCompressed(QStringView s)
 {
-    if (s.length() > MaxLatin1Length)
+    if (s.size() > MaxLatin1Length)
         return false;
     return QtPrivate::isLatin1(s);
 }
@@ -213,8 +182,8 @@ public:
     static void copy(char *dest, QStringView str)
     {
         Data *data = reinterpret_cast<Data *>(dest);
-        data->length = str.length();
-        qToLittleEndian<quint16>(str.utf16(), str.length(), data->utf16);
+        data->length = str.size();
+        qToLittleEndian<quint16>(str.utf16(), str.size(), data->utf16);
         fillTrailingZeros(data);
     }
 
@@ -226,7 +195,7 @@ public:
 
     bool operator ==(QStringView str) const
     {
-        int slen = str.length();
+        int slen = str.size();
         int l = d->length;
         if (slen != l)
             return false;
@@ -277,7 +246,7 @@ public:
     static void copy(char *dest, QStringView src)
     {
         Data *data = reinterpret_cast<Data *>(dest);
-        data->length = src.length(); // ### narrows from int to ushort
+        data->length = src.size(); // ### narrows from int to ushort
         auto *l = data->latin1;
         const auto srcData = src.utf16();
         for (qsizetype i = 0; i < src.size(); ++i)
@@ -312,18 +281,23 @@ static inline void copyString(char *dest, QStringView str, bool compress)
  */
 class Base
 {
+private:
+    using IsObjectAccessor = qle_bitfield_accessor<0, 1>;
+    using LengthAccessor = qle_bitfield_accessor<1, 31>;
 public:
     qle_uint size;
-    union {
-        uint _dummy;
-        qle_bitfield<0, 1> is_object;
-        qle_bitfield<1, 31> length;
-    };
+    qle_bitfield<IsObjectAccessor, LengthAccessor> isObjectAndLength;
     offset tableOffset;
     // content follows here
 
-    bool isObject() const { return !!is_object; }
+    void setIsObject() { isObjectAndLength.set<IsObjectAccessor>(1); }
+    bool isObject() const { return !!isObjectAndLength.get<IsObjectAccessor>(); }
+
+    void setIsArray() { isObjectAndLength.set<IsObjectAccessor>(0); }
     bool isArray() const { return !isObject(); }
+
+    void setLength(uint length) { isObjectAndLength.set<LengthAccessor>(length); }
+    uint length() const { return isObjectAndLength.get<LengthAccessor>(); }
 
     offset *table()
     {
@@ -368,39 +342,49 @@ public:
 
 class Value
 {
+private:
+    using TypeAccessor = qle_bitfield_accessor<0, 3>;
+    using LatinOrIntValueAccessor = qle_bitfield_accessor<3, 1>;
+    using LatinKeyAccessor = qle_bitfield_accessor<4, 1>;
+    using ValueAccessor = qle_bitfield_accessor<5, 27>;
+    using IntValueAccessor = qle_signedbitfield_accessor<5, 27>;
+
+    qle_bitfield<
+            TypeAccessor,
+            LatinOrIntValueAccessor,
+            LatinKeyAccessor,
+            ValueAccessor,
+            IntValueAccessor
+            > m_data;
+
+
+    int intValue() const { return m_data.get<IntValueAccessor>(); }
+
 public:
     enum {
         MaxSize = (1 << 27) - 1
     };
-    union {
-        uint _dummy;
-        qle_bitfield<0, 3> type;
-        qle_bitfield<3, 1> latinOrIntValue;
-        qle_bitfield<4, 1> latinKey;
-        qle_bitfield<5, 27> value;
-        qle_signedbitfield<5, 27> int_value;
-    };
 
     inline const char *data(const Base *b) const
     {
-        return reinterpret_cast<const char *>(b) + value;
+        return reinterpret_cast<const char *>(b) + value();
     }
 
     uint usedStorage(const Base *b) const;
 
     bool toBoolean() const
     {
-        Q_ASSERT(type == QJsonValue::Bool);
-        return value != 0;
+        Q_ASSERT(type() == QJsonValue::Bool);
+        return value() != 0;
     }
 
     double toDouble(const Base *b) const
     {
-        Q_ASSERT(type == QJsonValue::Double);
-        if (latinOrIntValue)
-            return int_value;
+        Q_ASSERT(type() == QJsonValue::Double);
+        if (isLatinOrIntValue())
+            return intValue();
 
-        auto i = qFromLittleEndian<quint64>(reinterpret_cast<const uchar *>(b) + value);
+        auto i = qFromLittleEndian<quint64>(reinterpret_cast<const uchar *>(b) + value());
         double d;
         memcpy(&d, &i, sizeof(double));
         return d;
@@ -408,26 +392,26 @@ public:
 
     QString toString(const Base *b) const
     {
-        return latinOrIntValue
+        return isLatinOrIntValue()
                 ? asLatin1String(b).toString()
                 : asString(b).toString();
     }
 
     String asString(const Base *b) const
     {
-        Q_ASSERT(type == QJsonValue::String && !latinOrIntValue);
+        Q_ASSERT(type() == QJsonValue::String && !isLatinOrIntValue());
         return String(data(b));
     }
 
     Latin1String asLatin1String(const Base *b) const
     {
-        Q_ASSERT(type == QJsonValue::String && latinOrIntValue);
+        Q_ASSERT(type() == QJsonValue::String && isLatinOrIntValue());
         return Latin1String(data(b));
     }
 
     const Base *base(const Base *b) const
     {
-        Q_ASSERT(type == QJsonValue::Array || type == QJsonValue::Object);
+        Q_ASSERT(type() == QJsonValue::Array || type() == QJsonValue::Object);
         return reinterpret_cast<const Base *>(data(b));
     }
 
@@ -437,6 +421,18 @@ public:
     static uint requiredStorage(const QBinaryJsonValue &v, bool *compressed);
     static uint valueToStore(const QBinaryJsonValue &v, uint offset);
     static void copyData(const QBinaryJsonValue &v, char *dest, bool compressed);
+
+    void setIsLatinKey(bool isLatinKey) { m_data.set<LatinKeyAccessor>(isLatinKey); }
+    bool isLatinKey() const { return m_data.get<LatinKeyAccessor>(); }
+
+    void setIsLatinOrIntValue(bool v) { m_data.set<LatinOrIntValueAccessor>(v); }
+    bool isLatinOrIntValue() const { return m_data.get<LatinOrIntValueAccessor>(); }
+
+    void setType(uint type) { m_data.set<TypeAccessor>(type); }
+    uint type() const { return m_data.get<TypeAccessor>(); }
+
+    void setValue(uint value) { m_data.set<ValueAccessor>(value); }
+    uint value() const { return m_data.get<ValueAccessor>(); }
 };
 
 class Entry {
@@ -448,7 +444,7 @@ public:
     uint size() const
     {
         uint s = sizeof(Entry);
-        if (value.latinKey)
+        if (value.isLatinKey())
             s += shallowLatin1Key().byteSize();
         else
             s += shallowKey().byteSize();
@@ -462,19 +458,19 @@ public:
 
     String shallowKey() const
     {
-        Q_ASSERT(!value.latinKey);
+        Q_ASSERT(!value.isLatinKey());
         return String(reinterpret_cast<const char *>(this) + sizeof(Entry));
     }
 
     Latin1String shallowLatin1Key() const
     {
-        Q_ASSERT(value.latinKey);
+        Q_ASSERT(value.isLatinKey());
         return Latin1String(reinterpret_cast<const char *>(this) + sizeof(Entry));
     }
 
     QString key() const
     {
-        return value.latinKey
+        return value.isLatinKey()
                 ? shallowLatin1Key().toString()
                 : shallowKey().toString();
     }
@@ -484,21 +480,21 @@ public:
         if (maxSize < sizeof(Entry))
             return false;
         maxSize -= sizeof(Entry);
-        return value.latinKey
+        return value.isLatinKey()
                 ? shallowLatin1Key().isValid(maxSize)
                 : shallowKey().isValid(maxSize);
     }
 
     bool operator ==(QStringView key) const
     {
-        return value.latinKey
+        return value.isLatinKey()
                 ? (shallowLatin1Key().toQLatin1String() == key)
                 : (shallowKey() == key);
     }
 
     bool operator >=(QStringView key) const
     {
-        return value.latinKey
+        return value.isLatinKey()
                 ? (shallowLatin1Key().toQLatin1String() >= key)
                 : (shallowKey().toString() >= key);
     }
@@ -556,9 +552,12 @@ public:
         header->version = 1;
         Base *b = header->root();
         b->size = sizeof(Base);
-        b->is_object = (valueType == QJsonValue::Object);
+        if (valueType == QJsonValue::Object)
+            b->setIsObject();
+        else
+            b->setIsArray();
         b->tableOffset = sizeof(Base);
-        b->length = 0;
+        b->setLength(0);
     }
 
     ~MutableData()

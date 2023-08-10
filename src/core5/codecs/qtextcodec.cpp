@@ -1,42 +1,6 @@
-/****************************************************************************
-**
-** Copyright (C) 2018 The Qt Company Ltd.
-** Copyright (C) 2018 Intel Corporation.
-** Contact: https://www.qt.io/licensing/
-**
-** This file is part of the QtCore module of the Qt Toolkit.
-**
-** $QT_BEGIN_LICENSE:LGPL$
-** Commercial License Usage
-** Licensees holding valid commercial Qt licenses may use this file in
-** accordance with the commercial license agreement provided with the
-** Software or, alternatively, in accordance with the terms contained in
-** a written agreement between you and The Qt Company. For licensing terms
-** and conditions see https://www.qt.io/terms-conditions. For further
-** information use the contact form at https://www.qt.io/contact-us.
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 3 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL3 included in the
-** packaging of this file. Please review the following information to
-** ensure the GNU Lesser General Public License version 3 requirements
-** will be met: https://www.gnu.org/licenses/lgpl-3.0.html.
-**
-** GNU General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU
-** General Public License version 2.0 or (at your option) the GNU General
-** Public license version 3 or any later version approved by the KDE Free
-** Qt Foundation. The licenses are as published by the Free Software
-** Foundation and appearing in the file LICENSE.GPL2 and LICENSE.GPL3
-** included in the packaging of this file. Please review the following
-** information to ensure the GNU General Public License requirements will
-** be met: https://www.gnu.org/licenses/gpl-2.0.html and
-** https://www.gnu.org/licenses/gpl-3.0.html.
-**
-** $QT_END_LICENSE$
-**
-****************************************************************************/
+// Copyright (C) 2018 The Qt Company Ltd.
+// Copyright (C) 2018 Intel Corporation.
+// SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
 
 #include "qplatformdefs.h"
 
@@ -111,7 +75,7 @@ QTextCodecData::QTextCodecData()
 
 QTextCodecData::~QTextCodecData()
 {
-    codecForLocale = nullptr;
+    codecForLocale.storeRelease(nullptr);
     QList<QTextCodec *> tmp = allCodecs;
     allCodecs.clear();
     codecCache.clear();
@@ -829,16 +793,14 @@ QTextEncoder* QTextCodec::makeEncoder(QTextCodec::ConversionFlags flags) const
     The \a state of the convertor used is updated.
 */
 
-#if QT_STRINGVIEW_LEVEL < 2
 /*!
     Converts \a str from Unicode to the encoding of this codec, and
     returns the result in a QByteArray.
 */
 QByteArray QTextCodec::fromUnicode(const QString& str) const
 {
-    return convertFromUnicode(str.constData(), str.length(), nullptr);
+    return convertFromUnicode(str.constData(), str.size(), nullptr);
 }
-#endif
 
 /*!
     \overload
@@ -849,7 +811,7 @@ QByteArray QTextCodec::fromUnicode(const QString& str) const
 */
 QByteArray QTextCodec::fromUnicode(QStringView str) const
 {
-    return convertFromUnicode(str.data(), str.length(), nullptr);
+    return convertFromUnicode(str.data(), str.size(), nullptr);
 }
 
 /*!
@@ -869,7 +831,7 @@ QByteArray QTextCodec::fromUnicode(QStringView str) const
 */
 QString QTextCodec::toUnicode(const QByteArray& a) const
 {
-    return convertToUnicode(a.constData(), a.length(), nullptr);
+    return convertToUnicode(a.constData(), a.size(), nullptr);
 }
 
 /*!
@@ -884,7 +846,6 @@ bool QTextCodec::canEncode(QChar ch) const
     return (state.invalidChars == 0);
 }
 
-#if QT_STRINGVIEW_LEVEL < 2
 /*!
     \overload
 
@@ -894,10 +855,9 @@ bool QTextCodec::canEncode(const QString& s) const
 {
     ConverterState state;
     state.flags = ConvertInvalidToNull;
-    convertFromUnicode(s.constData(), s.length(), &state);
+    convertFromUnicode(s.constData(), s.size(), &state);
     return (state.invalidChars == 0);
 }
-#endif
 
 /*!
     \overload
@@ -910,7 +870,7 @@ bool QTextCodec::canEncode(QStringView s) const
 {
     ConverterState state;
     state.flags = ConvertInvalidToNull;
-    convertFromUnicode(s.data(), s.length(), &state);
+    convertFromUnicode(s.data(), s.size(), &state);
     return !state.invalidChars;
 }
 /*!
@@ -977,15 +937,13 @@ bool QTextEncoder::hasFailure() const
     return state.invalidChars != 0;
 }
 
-#if QT_STRINGVIEW_LEVEL < 2
 /*!
     Converts the Unicode string \a str into an encoded QByteArray.
 */
 QByteArray QTextEncoder::fromUnicode(const QString& str)
 {
-    return c->fromUnicode(str.constData(), str.length(), &state);
+    return c->fromUnicode(str.constData(), str.size(), &state);
 }
-#endif
 
 /*!
     \overload
@@ -994,7 +952,7 @@ QByteArray QTextEncoder::fromUnicode(const QString& str)
 */
 QByteArray QTextEncoder::fromUnicode(QStringView str)
 {
-    return c->fromUnicode(str.data(), str.length(), &state);
+    return c->fromUnicode(str.data(), str.size(), &state);
 }
 
 /*!
@@ -1093,7 +1051,7 @@ void QTextDecoder::toUnicode(QString *target, const char *chars, int len)
 */
 QString QTextDecoder::toUnicode(const QByteArray &ba)
 {
-    return c->toUnicode(ba.constData(), ba.length(), &state);
+    return c->toUnicode(ba.constData(), ba.size(), &state);
 }
 
 /*!
