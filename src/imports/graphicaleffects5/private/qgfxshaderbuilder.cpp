@@ -14,7 +14,6 @@
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QOpenGLFunctions>
 
-#include <QtShaderTools/private/qshaderbaker_p.h>
 #include <QtQuick/qquickwindow.h>
 
 #include <qmath.h>
@@ -32,6 +31,10 @@ QT_BEGIN_NAMESPACE
 
 #ifndef GL_MAX_VARYING_VECTORS
 #define GL_MAX_VARYING_VECTORS 0x8DFC
+#endif
+
+#ifndef GL_MAX_VERTEX_OUTPUT_COMPONENTS
+#define GL_MAX_VERTEX_OUTPUT_COMPONENTS 0x9122
 #endif
 
 #if !defined(QT5COMPAT_MAX_BLUR_SAMPLES)
@@ -85,11 +88,12 @@ QGfxShaderBuilder::QGfxShaderBuilder()
         QSurface *oldSurface = oldContext ? oldContext->surface() : 0;
         if (context.makeCurrent(&surface)) {
             QOpenGLFunctions *gl = context.functions();
+            const bool coreProfile = context.format().profile() == QSurfaceFormat::CoreProfile;
             if (context.isOpenGLES()) {
                 gl->glGetIntegerv(GL_MAX_VARYING_VECTORS, &m_maxBlurSamples);
             } else if (context.format().majorVersion() >= 3) {
                 int components;
-                gl->glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &components);
+                gl->glGetIntegerv(coreProfile ? GL_MAX_VERTEX_OUTPUT_COMPONENTS : GL_MAX_VARYING_COMPONENTS, &components);
                 m_maxBlurSamples = components / 2.0;
             } else {
                 int floats;
@@ -108,6 +112,9 @@ QGfxShaderBuilder::QGfxShaderBuilder()
 #endif
     m_maxBlurSamples = QT5COMPAT_MAX_BLUR_SAMPLES;
 }
+
+QGfxShaderBuilder::~QGfxShaderBuilder()
+    = default;
 
 /*
 
