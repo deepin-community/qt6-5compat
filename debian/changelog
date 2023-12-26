@@ -1,14 +1,23 @@
-qt6-5compat (6.6.0-1) UNRELEASED; urgency=medium
+qt6-5compat (6.6.1-2) experimental; urgency=medium
+
+  [ Patrick Franz ]
+  * Update symbols from buildlogs.
+
+ -- Patrick Franz <deltaone@debian.org>  Fri, 22 Dec 2023 10:08:06 +0100
+
+qt6-5compat (6.6.1-1) experimental; urgency=medium
 
   [ Patrick Franz ]
   * New upstream release (6.6.0).
   * Bump Qt B-Ds to 6.6.0.
-
-  [ Tianyu Chen ]
   * Update list of installed files.
   * Update symbols from buildlogs.
+  * New upstream release (6.6.1).
+  * Bump Qt B-Ds to 6.6.1.
+  * New binary package qt6-5compat-examples.
+  * Update d/copyright.
 
- -- Debian Qt/KDE Maintainers <debian-qt-kde@lists.debian.org>  Sun, 29 Oct 2023 15:07:05 +0100
+ -- Patrick Franz <deltaone@debian.org>  Tue, 19 Dec 2023 23:12:59 +0100
 
 qt6-5compat (6.4.2-4) unstable; urgency=medium
 
