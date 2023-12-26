@@ -12,13 +12,11 @@ Build-Depends: cmake (>= 3.24~),
                ninja-build,
                pkg-config,
                pkg-kde-tools,
-               qml6-module-qtquick (>= 6.6.0+dfsg~),
-               qml6-module-qttest (>= 6.6.0+dfsg~),
-               qt6-base-dev (>= 6.6.0+dfsg~),
-               qt6-base-private-dev (>= 6.6.0+dfsg~),
-               qt6-declarative-dev (>= 6.6.0+dfsg~),
-               qt6-declarative-private-dev (>= 6.6.0+dfsg~),
-               qt6-shadertools-dev (>= 6.6.0~),
+               qt6-base-dev (>= 6.6.1+dfsg~),
+               qt6-base-private-dev (>= 6.6.1+dfsg~),
+               qt6-declarative-dev (>= 6.6.1+dfsg~),
+               qt6-declarative-private-dev (>= 6.6.1+dfsg~),
+               qt6-shadertools-dev (>= 6.6.1~),
 Build-Depends-Indep: qt6-base-dev (>= 6.6~) <!nodoc>,
                      qt6-documentation-tools (>= 6.6~) <!nodoc>,
 Standards-Version: 4.6.2
@@ -72,19 +70,30 @@ Architecture: all
 Section: doc
 Depends: qt6-base-doc, ${misc:Depends},
 Multi-Arch: foreign
-Description: Qt 6 5 compat documentation
+Description: Qt 6 Qt5Compat documentation
  Qt is a cross-platform C++ application framework. Qt's primary feature
  is its rich set of widgets that provide standard GUI functionality.
  .
- This package contains the documentation for the Qt 6 5 compat.
+ This package contains the documentation for the Qt 6 Qt5Compat.
 
 Package: qt6-5compat-doc-html
 Architecture: all
 Section: doc
 Depends: qt6-base-doc-html, ${misc:Depends},
 Multi-Arch: foreign
-Description: Qt 6 5 compat HTML documentation
+Description: Qt 6 Qt5Compat HTML documentation
  Qt is a cross-platform C++ application framework. Qt's primary feature
  is its rich set of widgets that provide standard GUI functionality.
  .
- This package contains the HTML documentation for the Qt 6 5 compat.
+ This package contains the HTML documentation for the Qt 6 Qt5Compat.
+
+Package: qt6-5compat-examples
+Architecture: any
+Multi-Arch: same
+Section: misc
+Depends: ${misc:Depends}, ${shlibs:Depends},
+Description: Qt 6 Qt5Compat examples
+ Qt is a cross-platform C++ application framework. Qt's primary feature
+ is its rich set of widgets that provide standard GUI functionality.
+ .
+ This package contains the examples for the Qt 6 Qt5Compat submodule.

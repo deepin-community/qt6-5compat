@@ -3,14 +3,14 @@ Upstream-Name: qt5compat-everywhere-src
 Source: https://download.qt.io/official_releases/qt/*/submodules/
 
 Files: *
-Copyright: 2016-2020 The Qt Company Ltd.
+Copyright: 2016-2023 The Qt Company Ltd.
            2016-2018 Intel Corporation.
            2019 Mail.ru Group.
            2020 Marc Mutz <marc.mutz@kdab.com>
 License: LGPL-3 or GPL-2
 
 Files: debian/*
-Copyright: 2021 Patrick Franz <deltaone@debian.org>,
+Copyright: 2021-2023 Patrick Franz <deltaone@debian.org>,
            2021 Lu YaNing <dluyaning@gmail.com>
 License: LGPL-3 or GPL-2
 
@@ -18,30 +18,27 @@ Files: src/core5/codecs/qtcore5-codecs.qdoc
        src/core5/doc/src/*.qdoc
        src/core5/qiterator.qdoc
        src/imports/graphicaleffects5/doc/src/*.qdoc
-Copyright: 2016-2020 The Qt Company Ltd.
+Copyright: 2016-2023 The Qt Company Ltd.
 License: GFDL-NIV-1.3
 
-Files: conanfile.py
-       tests/*
+Files: tests/*
        util/unicode/codecs/big5/main.cpp
-Copyright: 2016-2021 The Qt Company Ltd.
+Copyright: 2016-2023 The Qt Company Ltd.
            2016-2018 Intel Corporation.
 License: GPL-3 with Qt-1.0 exception
 
 Files: src/core5/doc/snippets/*
-       src/imports/graphicaleffects5/private/plugin.cpp
-       src/imports/graphicaleffects5/private/qgfxsourceproxy.cpp
-       src/imports/graphicaleffects5/private/qgfxsourceproxy_p.h
        src/imports/graphicaleffects5/*.qml
        src/imports/graphicaleffects5/plugin.cpp
-Copyright: 2016-2020 The Qt Company Ltd
+Copyright: 2016-2023 The Qt Company Ltd
            2016-2017 Jolla Ltd <gunnar.sletta@jollamobile.com>
 License: BSD-3-clause
 
-Files: examples/*
+Files: CMakeLists.txt
+       examples/*
        src/imports/graphicaleffects5/shaders_ng/compile.bat
        tests/manual/graphicaleffects5/*
-Copyright: 2016-2020 The Qt Company Ltd.
+Copyright: 2016-2023 The Qt Company Ltd.
 License: BSD-3-clause
 
 Files: examples/core5/widgets/tools/codecs/doc/src/codecs.qdoc
