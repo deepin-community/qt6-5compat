@@ -1,5 +1,5 @@
 usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QBinaryJson
-usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QConcatenable
+#usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QConcatenable
 usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QLinkedList
 usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QLinkedListData
 usr/include/${DEB_HOST_MULTIARCH}/qt6/QtCore5Compat/QLinkedListIterator
@@ -46,6 +46,7 @@ usr/lib/${DEB_HOST_MULTIARCH}/cmake/Qt6Core5Compat/Qt6Core5CompatDependencies.cm
 usr/lib/${DEB_HOST_MULTIARCH}/cmake/Qt6Core5Compat/Qt6Core5CompatTargets-none.cmake
 usr/lib/${DEB_HOST_MULTIARCH}/cmake/Qt6Core5Compat/Qt6Core5CompatTargets.cmake
 usr/lib/${DEB_HOST_MULTIARCH}/cmake/Qt6Core5Compat/Qt6Core5CompatVersionlessTargets.cmake
+usr/lib/${DEB_HOST_MULTIARCH}/cmake/Qt6Core5Compat/*.cmake 
 usr/lib/${DEB_HOST_MULTIARCH}/libQt6Core5Compat.prl
 usr/lib/${DEB_HOST_MULTIARCH}/libQt6Core5Compat.so
 usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/Qt6Core5Compat.pc
