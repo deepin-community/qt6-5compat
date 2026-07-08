@@ -1,3 +1,10 @@
+qt6-5compat (6.8.0-0deepin1) unstable; urgency=medium
+
+  * Add upstream patch to fix QTextCodec::codecForName() read-past-
+    buffer issue (QTBUG-145180).
+
+ -- Tian ShiLin <tianshilin@uniontech.com>  Wed, 08 Jul 2026 10:40:34 +0800
+
 qt6-5compat (6.8.0-0deepin) unstable; urgency=medium
 
   * New upstream release (6.8.0).
