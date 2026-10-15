@@ -7,3 +7,5 @@ CVE-2026-100140_sax-port-internal-implementation-to-qsizetype.patch
 CVE-2026-100140_sax-avoid-integer-truncation-line-column.patch
 CVE-2026-100140_qxmlattributes-limit-int-max-attributes.patch
 CVE-2026-103645_qtextcodec-fix-icu-overflow-infinite-loop.patch
+CVE-2026-107472_qtextcodec-fix-tscii-oob-read.patch
+CVE-2026-107590_qtextcodec-fix-iconv-oob-write.patch
