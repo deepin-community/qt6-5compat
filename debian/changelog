@@ -1,3 +1,12 @@
+qt6-5compat (6.8.0-0deepin4) unstable; urgency=medium
+
+  * Add CVE-2026-107472 fix for TSCII codec OOB read and CVE-2026-107590
+    fix for ICONV codec OOB write (QTBUG-149214).
+  * Add CVE-2026-107479 patch for QTextCodec input size exceeding INT_MAX
+    (QTBUG-149424).
+
+ -- Tian ShiLin <tianshilin@uniontech.com>  Thu, 15 Oct 2026 10:40:18 +0800
+
 qt6-5compat (6.8.0-0deepin3) unstable; urgency=medium
 
   * Add CVE security patches for QBinaryJson and SAX parser.
