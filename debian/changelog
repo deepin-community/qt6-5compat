@@ -1,3 +1,9 @@
+qt6-5compat (6.8.0-0deepin5) unstable; urgency=medium
+
+  * Add CVE-2026-105925 security patches.
+
+ -- zhanghongyuan <zhanghongyuan@uniontech.com>  Tue, 10 Nov 2026 13:51:46 +0800
+
 qt6-5compat (6.8.0-0deepin4) unstable; urgency=medium
 
   * Add CVE-2026-107472 fix for TSCII codec OOB read and CVE-2026-107590
