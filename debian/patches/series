@@ -1,0 +1,6 @@
+# CVE-2026-105925 QXmlSimpleReader entity expansion limits (backport from qt/qt5compat dev)
+# rebased for Qt 6.12.0
+CVE-2026-105925_qxmlsimplereader-add-tests-that-show-unconstrained-entity-ex.patch
+CVE-2026-105925_qxmlsimplereader-limit-entity-expansion-size-at-expansion-ti.patch
+CVE-2026-105925_qxmlsimplereader-add-parameter-entity-length-checks.patch
+CVE-2026-105925_qxmlsimplereader-add-a-property-to-control-entity-expansion.patch
